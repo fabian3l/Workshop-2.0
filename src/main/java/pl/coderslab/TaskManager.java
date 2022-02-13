@@ -1,28 +1,34 @@
 package pl.coderslab;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class TaskManager {
     public static void main(String[] args) throws IOException{
 
+        tasks = loadDataToDab(FILE_NAME);
         printOptions(OPTIONS);
-        tasks(FILE_NAME);
-        wyborAkcji();
+
+        wyborAkcji(tasks);
 
     }
 
     static final String FILE_NAME = "tasks.csv";
     static final String[] OPTIONS = {"add", "remove", "list", "exit"};
+    static String[][] tasks;
 
     public static void printOptions(String[] opt) {
         System.out.println(ConsoleColors.BLUE);
@@ -32,53 +38,66 @@ public class TaskManager {
         }
     }
 
-    public static String[][] tasks(String fileName) throws IOException {
+    public static String[][] loadDataToDab(String fileName){
 
+        Path sciezka = Paths.get(fileName);
 
-        Path file = Paths.get(fileName);
-        long line = 0;
-        line = Files.lines(file).count();
-        int lines = (int) line;
-        String[][] tab = new String[lines][3];
-        String[][] noExcuse = null;
-
-        if (!Files.exists(file)) {
-            System.out.println("blad");
-            return noExcuse;
-        } else {
-            Scanner scan = new Scanner(file);
-
-            int i = 0;
-            while (scan.hasNextLine()) {
-                tab[i] = scan.nextLine().split(",");
-                i++;
-            }
-
-            return tab;
+        if (!Files.exists(sciezka)){
+            System.out.println("file not exists");
+            System.exit(0);
         }
-    }
-    public static void wyborAkcji(){
-        Scanner skan = new Scanner(System.in);
-        String input = skan.next();
 
-        switch (input){
-            case "add":
-                addTask();
-                break;
-            case "remove":
-                removeTask();
-                break;
-            case "list":
-                listTask();
-                break;
-            case "exit":
-                exitTask();
-                break;
-            default:
-                System.out.println("Please select a correct option");
+        String[][] tab= null;
+
+        try {
+            List<String> linie = Files.readAllLines(sciezka);
+            tab = new String[linie.size()][linie.get(0).split(",").length];
+
+            for (int i = 0; i < linie.size(); i++){
+
+                String[] split = linie.get(i).split(",");
+
+                for (int j = 0; j < split.length; j++){
+                    tab[i][j] = split[j];
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return tab;
+    }
+
+    public static void wyborAkcji(String[][] tasks){
+
+        Scanner skan = new Scanner(System.in);
+
+        while (skan.hasNextLine()){
+            String input = skan.next();
+            switch (input){
+                case "add":
+                    addTask();
+                    break;
+                case "remove":
+                    removeTask(tasks, getTheNumber());
+                    System.out.println("Value was removed successfully");
+                    break;
+                case "list":
+                    listTask(tasks);
+                    break;
+                case "exit":
+                    exitTask(FILE_NAME, tasks);
+                    System.out.println(ConsoleColors.RED + "Bye bye");
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Please select a correct option");
+        }
+        printOptions(OPTIONS);
+
 
         }
     }public static void addTask(){
+
         Scanner skan = new Scanner(System.in);
         System.out.println("Pleas add task description");
         String description = skan.nextLine();
@@ -89,34 +108,55 @@ public class TaskManager {
         System.out.println("Is your task is important: true / false");
         String important = skan.nextLine();
 
+        tasks = Arrays.copyOf(tasks, tasks.length+1);
 
-        try {
-            String[][] result = tasks(FILE_NAME);
-            result[]
-        } catch (IOException e) {
-            e.printStackTrace();
+        tasks[tasks.length-1] = new String[3];
+        tasks[tasks.length-1][0] = description;
+        tasks[tasks.length-1][1] = date;
+        tasks[tasks.length-1][2]= important;
+
+    }
+    public static boolean isNumberGreaterThanZero(String input) { //metoda sprawdzająca czy Stringa można zamienić na inta oraz czy jest większa niż zero
+        if (NumberUtils.isParsable(input)){
+            return Integer.parseInt(input) >= 0;
+        }else{
+           return false;
         }
+    }
+    public static int getTheNumber(){ //pobieranie numeru lini do usuniecia
+
+        Scanner skan = new Scanner(System.in);
+        System.out.println("Please select number to remove");
+
+        String n = skan.nextLine();
+
+        while (!isNumberGreaterThanZero(n)){
+            System.out.println("Incorrect argument, please give a number greater or equal zero");
+            skan.nextLine();
+        }return Integer.parseInt(n);
+    }
+    public static void removeTask(String[][] tab, int index){
+
+       try{
+           if (index < tab.length){
+               tasks = ArrayUtils.remove(tab, index);
+           }
+       }catch (ArrayIndexOutOfBoundsException ex){
+           System.out.println("Element not exists in tab");
+       }
 
 
 
-    }public static void removeTask(){
+    }public static void listTask(String[][] tab){
 
-    }public static void listTask(){
-
-
-            String[][] tab = new String[0][0];
-
-            try {
-                tab = tasks(FILE_NAME);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             for (int row = 0; row < tab.length; row++) {
-                System.out.println(row + 1 + ": ");
+
+                System.out.print(row + 1 + ": ");
+
                 for (int col = 0; col < tab[0].length; col++) {
 
                     if (tab[row][0] != null) {
-                        System.out.print(tab[row][col] + " ");
+                        System.out.print(tab[row][col] + ", ");
                     }
                 }
                 if (tab[row][0] != null) {
@@ -126,7 +166,21 @@ public class TaskManager {
             }
 
 
-    }public static void exitTask(){
+    }public static void exitTask(String fileName, String[][] tab){
+        Path plik = Paths.get(fileName);
+
+        String[] lines = new String[tab.length];
+
+        for (int i = 0; i < tab.length; i++){
+            lines[i] = String.join(",", tab[i]);
+        }
+
+        try {
+            Files.write(plik, Arrays.asList(lines));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
     }
 
