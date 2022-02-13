@@ -3,7 +3,6 @@ package pl.coderslab;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -21,7 +20,6 @@ public class TaskManager {
 
         tasks = loadDataToDab(FILE_NAME);
         printOptions(OPTIONS);
-
         wyborAkcji(tasks);
 
     }
@@ -180,9 +178,5 @@ public class TaskManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
-
-
 }
